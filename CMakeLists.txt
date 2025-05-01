@@ -3,4 +3,5 @@ project(ConsoleGUI)
 add_executable(${PROJECT_NAME}
     src/consoleGUI.cpp
     src/console.cpp
+    src/progressBar.cpp
 )

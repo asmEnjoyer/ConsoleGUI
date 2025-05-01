@@ -17,8 +17,10 @@ void console::mainLoop()
             shouldClose();
         clear();
         editorDrawRows();
-        if (_settings.progressBarVisible)
-            drawProgressBar();
+        for (auto d : _drawable)
+        {
+            d->draw(_buffer, _screen);
+        }
         printBuffer();
     }
     close();
@@ -82,39 +84,6 @@ void console::getCursorPos(int &line, int &column)
     }
 }
 
-void console::drawProgressBar()
-{
-    _buffer << "\e[38;5;2m";
-    _buffer << "\e[" << _window.height - 1 << ";" << 2 << "H[";
-    int barLength = (_window.width - 3) * (*_settings.pProgressBarValue);
-    barLength /= 100;
-    for (int i = 0; i < barLength; i++)
-        _buffer << "=";
-
-    _buffer << "\e[" << _window.width - 1 << "G]";
-    _buffer << "\e[48;5;7m";
-    if (*_settings.pProgressBarValue < 50)
-        _buffer << "\e[38;5;1m";
-    else if (*_settings.pProgressBarValue < 90)
-        _buffer << "\e[38;5;3m";
-    else
-        _buffer << "\e[38;5;10m";
-
-    int centerPoint = _window.width;
-    if (*_settings.pProgressBarValue > 9)
-        centerPoint--;
-    if (*_settings.pProgressBarValue == 100)
-        centerPoint--;
-    centerPoint /= 2;
-    _buffer << "\e[" << centerPoint << "G";
-    if (*_settings.pProgressBarValue == 100)
-        _buffer << "DONE!";
-    else
-        _buffer << *_settings.pProgressBarValue << "%";
-
-    _buffer << "\e[0m";
-}
-
 void console::printBuffer()
 {
     write(STDOUT_FILENO, _buffer.str().c_str(), _buffer.str().length());
@@ -124,17 +93,6 @@ void console::printBuffer()
 void console::shouldClose()
 {
     _shouldClose = true;
-}
-
-void console::displayProgress(int &progress)
-{
-    _settings.progressBarVisible = true;
-    _settings.pProgressBarValue = &progress;
-}
-
-void console::hideProgress()
-{
-    _settings.progressBarVisible = false;
 }
 
 console::console()
@@ -159,6 +117,10 @@ void console::editorDrawRows()
 {
     write(STDOUT_FILENO, "\e[999C\e[999B", 12);
     getCursorPos(_window.height, _window.width);
+    _screen.x = 1;
+    _screen.y = 1;
+    _screen.width = _window.width;
+    _screen.height = _window.height;
     _buffer << "\e[H";
     for (int y = 0; y < _window.height; y++)
     {
@@ -172,6 +134,10 @@ void console::editorDrawRows()
             _buffer
                 << "\r\n";
     }
+    _screen.x += 1;
+    _screen.y += 1;
+    _screen.width -= 2;
+    _screen.height -= 2;
 }
 
 void console::clear()

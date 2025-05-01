@@ -1,4 +1,5 @@
 #pragma once
+#include "drawable.h"
 
 #include <unistd.h>
 #include <termios.h>
@@ -10,18 +11,19 @@
 #include <ctype.h>
 
 #include <sstream>
+#include <vector>
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 inline class console
 {
 private:
-    struct settings
-    {
-        bool progressBarVisible = false;
-        int *pProgressBarValue;
-    } _settings;
-
+    struct Drawable::Rect _screen;
+    // struct settings
+    // {
+    //     bool progressBarVisible = false;
+    //     int *pProgressBarValue;
+    // } _settings;
     struct cursor
     {
         int line;
@@ -39,6 +41,7 @@ private:
     bool _shouldClose = false;
 
 public:
+    std::vector<Drawable *> _drawable;
     console();
     ~console();
     int getWindowSize(int *rows, int *cols);
