@@ -7,6 +7,12 @@ ProgressBar::ProgressBar(int &value)
 
 void ProgressBar::draw(std::stringstream &_buffer, Drawable::Rect &rect)
 {
+
+    _buffer << "\e[" << rect.height + rect.y - 2 << ";" << rect.x << "H";
+    for (int i = 0; i < rect.width; i++)
+    {
+        _buffer << "#";
+    }
     _buffer << "\e[38;5;2m";
     _buffer << "\e[" << rect.height + rect.y - 1 << ";" << rect.x << "H[";
     _buffer << "\e[" << rect.width + rect.x - 1 << "G]";
@@ -37,5 +43,5 @@ void ProgressBar::draw(std::stringstream &_buffer, Drawable::Rect &rect)
         _buffer << *_pValue << "%";
 
     _buffer << "\e[0m";
-    rect.height--;
+    rect.height -= 2;
 }
