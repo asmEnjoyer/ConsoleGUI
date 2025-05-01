@@ -48,7 +48,7 @@ public:
     void disableRawMode();
     void printBuffer();
     void shouldClose();
-    void displayProgress(int *progress);
+    void displayProgress(int &progress);
     void hideProgress();
 
 private:

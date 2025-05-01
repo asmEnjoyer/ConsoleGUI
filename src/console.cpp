@@ -84,11 +84,22 @@ void console::getCursorPos(int &line, int &column)
 
 void console::drawProgressBar()
 {
+    _buffer << "\e[38;5;2m";
     _buffer << "\e[" << _window.height - 1 << ";" << 2 << "H[";
     int barLength = (_window.width - 3) * (*_settings.pProgressBarValue);
     barLength /= 100;
     for (int i = 0; i < barLength; i++)
         _buffer << "=";
+
+    _buffer << "\e[" << _window.width - 1 << "G]";
+    _buffer << "\e[48;5;7m";
+    if (*_settings.pProgressBarValue < 50)
+        _buffer << "\e[38;5;1m";
+    else if (*_settings.pProgressBarValue < 90)
+        _buffer << "\e[38;5;3m";
+    else
+        _buffer << "\e[38;5;10m";
+
     int centerPoint = _window.width;
     if (*_settings.pProgressBarValue > 9)
         centerPoint--;
@@ -101,7 +112,7 @@ void console::drawProgressBar()
     else
         _buffer << *_settings.pProgressBarValue << "%";
 
-    _buffer << "\e[" << _window.width - 1 << "G]";
+    _buffer << "\e[0m";
 }
 
 void console::printBuffer()
@@ -115,10 +126,10 @@ void console::shouldClose()
     _shouldClose = true;
 }
 
-void console::displayProgress(int *progress)
+void console::displayProgress(int &progress)
 {
     _settings.progressBarVisible = true;
-    _settings.pProgressBarValue = progress;
+    _settings.pProgressBarValue = &progress;
 }
 
 void console::hideProgress()

@@ -14,7 +14,7 @@ int main()
 {
 	int progress = 0;
 	int a = 2;
-	Console.displayProgress(&progress);
+	Console.displayProgress(progress);
 	for (int i = 0; i <= 100000000; i++)
 	{
 		isprime(i);
