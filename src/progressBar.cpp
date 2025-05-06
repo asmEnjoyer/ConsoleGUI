@@ -1,4 +1,4 @@
-#include "progressBar.h"
+#include "progressBar.hpp"
 
 ProgressBar::ProgressBar(int &value)
 {

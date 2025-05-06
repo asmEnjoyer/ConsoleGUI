@@ -2,19 +2,9 @@
 
 void console::mainLoop()
 {
-    getTermios();
-    enableRawMode();
 
-    save();
-    clear();
-    editorDrawRows();
-    printBuffer();
     while (!_shouldClose)
     {
-        char c = '\0';
-        read(STDIN_FILENO, &c, 1);
-        if (c == CTRL_KEY('q'))
-            shouldClose();
         clear();
         editorDrawRows();
         for (auto d : _drawable)
@@ -22,8 +12,25 @@ void console::mainLoop()
             d->draw(_buffer, _screen);
         }
         printBuffer();
+        {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ms);
+        }
     }
     close();
+}
+
+void console::inputLoop()
+{
+    char c = '\0';
+    while (!_shouldClose)
+    {
+        _readMutex.lock();
+        read(STDIN_FILENO, &c, 1);
+        _readMutex.unlock();
+        if (c == CTRL_KEY('q'))
+            shouldClose();
+    }
 }
 
 void console::getTermios()
@@ -54,11 +61,12 @@ void console::close()
     printBuffer();
     load();
     printBuffer();
-    exit(0);
+    // exit(0);
 }
 
 void console::getCursorPos(int &line, int &column)
 {
+    _readMutex.lock();
     line = 0;
     column = 0;
     write(STDOUT_FILENO, "\e[6n", 4);
@@ -82,6 +90,7 @@ void console::getCursorPos(int &line, int &column)
             column += (ch & 0xf);
         }
     }
+    _readMutex.unlock();
 }
 
 void console::printBuffer()
@@ -92,45 +101,43 @@ void console::printBuffer()
 
 void console::shouldClose()
 {
+
     _shouldClose = true;
+}
+
+void console::log(std::string s)
+{
+    // logs.push(s);
 }
 
 console::console()
 {
-    _cursor.line = 0;
-    _cursor.column = 0;
-    std::thread thread(&console::mainLoop, this);
-    thread.detach();
-}
+    getTermios();
+    enableRawMode();
 
-int console::getWindowSize(int *rows, int *cols)
-{
-    struct winsize ws;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
-        return -1;
-    *cols = ws.ws_col;
-    *rows = ws.ws_row;
-    return 0;
+    save();
+    std::thread mainThread(&console::mainLoop, this);
+    std::thread inputThread(&console::inputLoop, this);
+    mainThread.detach();
+    inputThread.detach();
 }
 
 void console::editorDrawRows()
 {
     write(STDOUT_FILENO, "\e[999C\e[999B", 12);
-    getCursorPos(_window.height, _window.width);
+    getCursorPos(_screen.height, _screen.width);
     _screen.x = 1;
     _screen.y = 1;
-    _screen.width = _window.width;
-    _screen.height = _window.height;
     _buffer << "\e[H";
-    for (int y = 0; y < _window.height; y++)
+    for (int y = 0; y < _screen.height; y++)
     {
         _buffer << "#";
-        if (y == 0 || y == _window.height - 1)
-            for (int x = 1; x < _window.width; x++)
+        if (y == 0 || y == _screen.height - 1)
+            for (int x = 1; x < _screen.width; x++)
                 _buffer << "#";
         else
-            _buffer << "\e[" << _window.width << "G#";
-        if (y < _window.height - 1)
+            _buffer << "\e[" << _screen.width << "G#";
+        if (y < _screen.height - 1)
             _buffer
                 << "\r\n";
     }
@@ -154,7 +161,7 @@ void console::enableRawMode()
     raw.c_cflag |= (CS8);
     raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
     raw.c_cc[VMIN] = 0;
-    raw.c_cc[VTIME] = 1;
+    raw.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 

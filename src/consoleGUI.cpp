@@ -1,40 +1,41 @@
 #include "console.hpp"
-#include "progressBar.h"
-#include "variableList.h"
+#include "progressBar.hpp"
+#include "variableList.hpp"
+#include <vector>
+
+std::vector<int> primes;
 
 bool isprime(int a)
 {
-	for (int i = 2; i * i < a; i++)
+	for (auto p : primes)
 	{
-		if (a % i == 0)
+		if (p * p > a)
+			break;
+		if (a % p == 0)
 			return false;
 	}
+	primes.push_back(a);
 	return true;
 }
 
 int main()
 {
 	int progress = 0;
-	int a = 2;
-	int i = 0;
-	int prime = 0;
+	int primes = 0;
 	ProgressBar *bar = new ProgressBar(progress);
 	VariableList *var = new VariableList();
-	var->add("number", i);
-	var->add("Is Odd", prime);
+	var->add("primes", primes);
 	Console._drawable.push_back(bar);
 	Console._drawable.push_back(var);
-	// Console.displayProgress(progress);
-	for (i = 0; i <= 100000000; i++)
+	int i = 0;
+	var->add("number", i);
+	for (i = 2; i <= 100000000; i++)
 	{
-		prime = i % 3;
-		isprime(i);
+		if (isprime(i))
+			primes++;
 		progress = i / 1000000;
 	}
-	// Console.shouldClose();
-	while (1)
-	{
-	}
+	i--;
 
 	return 0;
 }
